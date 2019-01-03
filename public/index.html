@@ -1,0 +1,148 @@
+<!-- 
+    maker : park
+    date : 2019.01.01
+    cloud link : https://node-socketio-park.mybluemix.net
+    bootstrap : https://bootsnipp.com/snippets/featured/simple-chat 
+-->
+<!DOCTYPE html>
+<!-- <html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="index.css">
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var me = {};
+            me.avatar = 'https://lh6.googleusercontent.com/-lr2nyjhhjXw/AAAAAAAAAAI/AAAAAAAARmE/MdtfUmC0M4s/photo.jpg?sz=48';
+
+            var you = {};
+            you.avatar = 'https://a11.t26.net/taringa/avatares/9/1/2/F/7/8/Demon_King1/48x48_5C5.jpg';
+
+            var peopleList = [];
+
+            function formatAMPM(date) {
+                var hours = date.getHours();
+                var minutes = date.getMinutes();
+                var ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12;
+                hours = hours ? hours : 12; // the hour '0' should be '12'
+                minutes = minutes < 10 ? '0' + minutes : minutes;
+                var strTime = hours + ':' + minutes + ' ' + ampm;
+                return strTime;
+            }
+
+            // var socket = io.connect('https://node-socketio-park.mybluemix.net');
+            var socket = io.connect('http://localhost:8080');
+            $('.mytext').keyup(function (event) {
+                if (event.which == 13) {
+                    console.log('what is my input text is '+$('.mytext').val());
+                    socket.emit('fromclient', { msg: $('.mytext').val() });
+                    $('.mytext').val('');
+                }
+            });
+            socket.on('toclient', function (data) {
+                control = '';
+
+                if (data.type === 'welcome') {
+                    peopleList = data.peopleList;
+                    $('.mytext').focus();
+                    return;
+                }
+                if (data.sender === 'me') {
+                    control = '<li style="width:100%">' +
+                        '<div class="msj macro">' +
+                        '<div class="avatar"><img class="img-circle" style="width:100%;" src="' + me.avatar + '" /></div>' +
+                        '<div class="text text-l">' +
+                        '<p>' + data.msg + '</p>' +
+                        '<p><small>' + formatAMPM(new Date()) + '</small></p>' +
+                        '</div>' +
+                        '</div>' +
+                        '</li>';
+                } else if (data.sender === 'other') {
+                    control = '<li style="width:100%;">' +
+                        '<div class="msj-rta macro">' +
+                        '<div class="text text-r">' +
+                        '<p>' + data.msg + '</p>' +
+                        '<p><small>' + formatAMPM(new Date()) + '</small></p>' +
+                        '</div>' +
+                        '<div class="avatar" style="padding:0px 0px 0px 10px !important"><img class="img-circle" style="width:100%;" src="' + you.avatar + '" /></div>' +
+                        '</li>';
+                }
+
+                // $('#msgs').append(data.msg + '<BR>');
+                $('#msgs').append(control).scrollTop($('ul').prop('scrollHeight'));
+                $('.mytext').focus();
+
+                console.log('peopleCount-'+peopleList.length);
+                console.log(peopleList);
+            });
+            $('.mytext').focus();
+            $('#msgsArea').on('click',function(){
+                console.log('message text area is clicked that can input message');
+                $('.mytext').focus();
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <div class="col-sm-3 col-sm-offset-4 frame">
+        <ul id="msgs"></ul>
+        <div>
+            <div class="msj-rta macro" id="msgsArea">
+                <div class="text text-r" style="background:whitesmoke !important">
+                    <input class="mytext" placeholder="Type a message" />
+                </div>
+            </div>
+            <div style="padding:10px;">
+                <span class="glyphicon glyphicon-share-alt"></span>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html> -->
+
+
+
+
+
+<html>
+
+<head>
+    <title></title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var socket = io.connect('https://node-socketio-park.mybluemix.net');
+            // var socket = io.connect('http://localhost:8080');
+            $("#msgbox").keyup(function (event) {
+                if (event.which == 13) {
+                    socket.emit('fromclient', { msg: $('#msgbox').val() });
+                    $('#msgbox').val('');
+                }
+            });
+            socket.on('toclient', function (data) {
+                console.log(data.msg);
+                $('#msgs').append(data.msg + '<BR>');
+            });
+            $("#msgbox").focus();
+        });
+    </script>
+</head>
+
+<body>
+    <b>Send message</b>
+    <p>
+        Message <input type="text" id="msgbox" />
+        <br>
+        <span id="msgs"></span>
+
+</body>
+
+</html>

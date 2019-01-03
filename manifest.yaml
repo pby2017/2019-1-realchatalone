@@ -1,0 +1,5 @@
+---
+applications:
+- name: node-socketio-park
+  memory: 256M
+  instances: 1
