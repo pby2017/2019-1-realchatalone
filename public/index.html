@@ -114,13 +114,50 @@
 <html>
 
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        header {
+            background-color:rgb(255, 0, 0);
+            clear:both;
+        }
+        nav {
+            background-color:rgb(255, 196, 0);
+            height: 5%;
+            clear:both;
+        }
+        section article{
+            background-color:rgb(0, 255, 21);
+            height: 85%;
+            float: left;
+            margin:5px;
+            padding:5px;
+        }
+        #articleOnlineGuests{
+            width:20%;
+        }
+        #articleMessages{
+            width:70%;
+        }
+        #articleMessages span.line{
+            display: inline-block;
+        }
+        aside {
+            background-color:rgb(25, 0, 255);
+            float: right;
+        }
+        footer {
+            background-color:rgb(198, 233, 1);
+            margin:10px;
+            clear:both;
+            text-align:center;
+        }
+    </style>
     <title></title>
     <script src="/socket.io/socket.io.js"></script>
     <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
             var socket = io.connect('https://node-socketio-park.mybluemix.net');
-            // var socket = io.connect('http://localhost:8080');
             $("#msgbox").keyup(function (event) {
                 if (event.which == 13) {
                     socket.emit('fromclient', { msg: $('#msgbox').val() });
@@ -130,6 +167,13 @@
             socket.on('toclient', function (data) {
                 console.log(data.msg);
                 $('#msgs').append(data.msg + '<BR>');
+
+                if (data.type === 'welcome') {
+                    console.log(data.peopleList);
+                    for(var i=0; i<data.peopleList.length; ++i){
+                        $('#onlineGuests').append(data.peopleList[i] + '<BR>');
+                    }
+                }
             });
             $("#msgbox").focus();
         });
@@ -137,11 +181,25 @@
 </head>
 
 <body>
-    <b>Send message</b>
-    <p>
-        Message <input type="text" id="msgbox" />
-        <br>
-        <span id="msgs"></span>
+    <header></header>
+    <nav></nav>
+    <section>
+        <article id="articleOnlineGuests">
+            <b>Online guest</b>
+            <br>
+            <span id="onlineGuests"></span>
+        </article>
+        <article id="articleMessages">
+            <b>Send message</b>
+            <p>
+                Write Message & Enter <input type="text" id="msgbox" />
+            </p>
+            <br>
+            <span id="msgs"></span>
+        </article>
+    </section>
+    <aside></aside>
+    <footer></footer>
 
 </body>
 
