@@ -114,7 +114,7 @@
 <html>
 
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, user-scalable=false;">
     <style>
         header {
             background-color:rgb(255, 0, 0);
@@ -133,7 +133,8 @@
         }
         section article{
             background-color:rgb(0, 255, 21);
-            height: 85%;
+            height: 100%;
+            width: 90%;
             float: left;
             margin:5px;
             padding:5px;
@@ -142,16 +143,33 @@
             width:70%;
         }
         #articleOnlineGuests{
-            width:70%;
+            display: inline-block;
+            width:50%;
         }
         #articleVisitedGuests{
-            width:70%;
+            display: inline-block;
+            width:50%;
         }
         #articleMessages{
-            width:60%;
+            /* width:90%; */
         }
-        #articleMessages span.line{
+        /* #articleMessages ul.line{
             display: inline-block;
+        } */
+        #articleMessages #msgs-div{
+            height: 400px;
+            /* height: 80%; */
+        }
+        #articleMessages #msgs-div #msgs{
+            height: 100%;
+            width: 100%;
+            list-style-type: none;
+            padding: 18px;
+            bottom: 47px;
+            display: flex;
+            flex-direction: column;
+            top: 0;
+            overflow-y: auto;
         }
         aside {
             background-color:rgb(25, 0, 255);
@@ -164,12 +182,71 @@
             clear:both;
             text-align:center;
         }
+        .avatar{
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            width:50px;
+            /* width:10%; */
+            float:left;
+            padding-right:10px;
+            display: inline-block;
+        }
+        .msg-content{
+            /* display: flex; */ /* textarea가 ip, time 밑에 표시되게 함*/
+            width:80%;
+            float:left;
+        }
+        .msg-time{
+            display: flex;
+            /* width: 10%; */
+            float: left;
+        }
+        .msg-addr{
+            display: flex;
+            /* width: 10%; */
+            float: left;
+        }
+        .msg-msg{
+            width: 100%;
+            display: flex;
+            float: left;
+            white-space: normal;
+            /* background-color:rgb(153, 231, 160); */
+            border: none;
+            resize: none;
+        }
     </style>
     <title></title>
     <script src="/socket.io/socket.io.js"></script>
     <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
+
+            $('#msg-msg').width('500px');
+
+            function control(time, addr, msg, id) {
+                return '<li style="width:100%;">' +
+                    '<div class="avatar"><img class="img-circle" style="width:100%;" src="' + me.avatar + '" /></div>' +
+                    '<div class="msg-content">' +
+                    '<div>' +
+                    '<p class="msg-addr"><small>' + addr + '</small></p>' +
+                    '<p class="msg-time"><small>' + time + '</small></p>' +
+                    '</div>' +
+                    '<textarea class="msg-msg" id=' +
+                    '"msg-msg-' + id +'"' + ' readonly>' + msg + '</textarea>' +
+                    '</div>' +
+                    '</li>';
+            }
+
+            var me = {};
+            me.avatar = 'https://lh6.googleusercontent.com/-lr2nyjhhjXw/AAAAAAAAAAI/AAAAAAAARmE/MdtfUmC0M4s/photo.jpg?sz=48';
+
+            var you = {};
+            you.avatar = 'https://a11.t26.net/taringa/avatares/9/1/2/F/7/8/Demon_King1/48x48_5C5.jpg';
+
             var socket = io.connect('https://node-socketio-park.mybluemix.net');
             $("#msgbox").keyup(function (event) {
                 if (event.which == 13) {
@@ -178,25 +255,37 @@
                 }
             });
             socket.on('toclient', function (data) {
-                console.log(data.msg);
 
                 if (data.type === 'welcome') {
-                    console.log(data.onlinePeopleList);
-                    for(var i=0; i<data.onlinePeopleList.length; ++i){
-                        $('#onlineGuests').append(data.onlinePeopleList[i] + '<BR>');
+                    for (var i = 0; i < data.onlinePeopleList.length; ++i) {
+                        $('#onlineGuests').append(data.onlinePeopleList[i] + '<BR>')
+                            .scrollTop($('#onlineGuests').prop('scrollHeight'));
                     }
-                    for(var i=0; i<data.todayPeopleList.length; ++i){
-                        $('#todayGuests').append(data.todayPeopleList[i] + '<BR>');
+                    for (var i = 0; i < data.todayPeopleList.length; ++i) {
+                        $('#todayGuests').append(data.todayPeopleList[i] + '<BR>')
+                            .scrollTop($('#todayGuests').prop('scrollHeight'));
                     }
-                    for(var i=0; i<data.msg.length; ++i){
-                        $('#msgs').append(data.msg[i] + '<BR>');
-                            console.log(data.msg[i]);
+                    for (var i = 0; i < data.msg.length; ++i) {
+                        
+                        $('#msgs').append(
+                            control(data.msg[i].time, data.msg[i].addr, data.msg[i].msg, data.msg[i].id) + '<BR>');
+                        
+                        var msgTextarea = $('#msgs #msg-msg-' + data.msg[i].id);
+                        msgTextarea.css('height', 24);
+                        msgTextarea.height = 'auto';
+                        var msgTextareaHeight = msgTextarea.prop('scrollHeight');
+                        msgTextarea.css('height', msgTextareaHeight+5);
+
                     }
-                    console.log("??");
-                    $('#totalVisited').text(data.totalVisited);
-                    $('#todayVisited').text(data.todayVisited);
+                    $('#msgs').scrollTop($('#msgs').prop('scrollHeight'));
                 } else {
-                    $('#msgs').append(data.msg + '<BR>');
+                    $('#msgs').append(
+                        control(data.msg.time, data.msg.addr, data.msg.msg, data.msg.id) + '<BR>');
+                    var msgTextarea = $('#msgs #msg-msg-' + data.msg.id);
+                    msgTextarea.height = 'auto';
+                    var msgTextareaHeight = msgTextarea.prop('scrollHeight');
+                    msgTextarea.css('height', msgTextareaHeight+5);
+                    $('#msgs').scrollTop($('#msgs').prop('scrollHeight'));
                 }
             });
             $("#msgbox").focus();
@@ -208,7 +297,17 @@
     <header></header>
     <nav></nav>
     <section>
-        <aside>
+        <article id="articleMessages">
+            <div id="msgs-div">
+                <ul id="msgs"></ul>
+            </div>
+            <br>
+            <b>Send message</b>
+            <p>
+                Write Message & Enter <input type="text" id="msgbox" />
+            </p>
+        </article>
+        <aside style="display: none;">
             <article id="articleVisitedCount">
                 <b>Total Visited </b>
                 <span id="totalVisited"></span>
@@ -228,18 +327,15 @@
                 <span id="todayGuests"></span>
             </article>
         </aside>
-        <article id="articleMessages">
-            <b>Send message</b>
-            <p>
-                Write Message & Enter <input type="text" id="msgbox" />
-            </p>
-            <br>
-            <span id="msgs"></span>
-        </article>
     </section>
     <aside></aside>
     <footer></footer>
-
 </body>
 
 </html>
+
+<!-- 
+    1. 모바일 환경 키보드 나타날 때 화면 변경
+    https://stackoverflow.com/a/19235737
+
+ -->

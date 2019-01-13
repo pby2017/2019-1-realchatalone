@@ -41,21 +41,36 @@ function formatAMPM(date) {
 }
 
 setInterval(function () {
-    if (new Date().getHours === 0) {
-        socketio_today.get(process.env.DB_DOC_NAME)
+    console.log('new Date().getHours = ', new Date().getHours());
+    if(new Date().getHours() === 23){
+        console.log('good');
+    }
+    console.log(new Date().getHours,new Date().getHours.type);
+    if (new Date().getHours() === 0) {
+        socketio_today.get(process.env.DB_DOC_NAME, { revs_info: true })
             .then((body) => {
                 console.log('get today DOC ! \n', body);
-                body.totalVisited = totalVisited;
-                todayVisited = 0;
-                todayPeopleManage = {};
-                body.message = body.message.concat(chatHistory);
-                chatHistory = [];
 
-                // DB에 저장하는 코드 필요
+                // DB에 저장하는 코드 필요(이전 데이터랑 비교해서 변경사항이 있으면)
+                if((totalVisited) => {
+                    if (body.totalVisited !== totalVisited){
+                        body.totalVisited = totalVisited;
+                        return true;
+                    }
+                    return false;
+                }){
+                    socketio_today.insert({_id: process.env.DB_DOC_NAME, _rev: body._rev, totalVisited: totalVisited })
+                    .then((body) => {
+                        console.log('body ! \n',body);
+                    });
+                }
                 // socketio_today.insert({ people: onlinePeopleList }, process.env.DB_DOC_NAME)
                 // .then((body) => {
                 //     console.log('body ! \n',body);
                 // });
+
+                todayVisited = 0;
+                todayPeopleManage = {};
             })
             .catch((err) => {
                 console.log('get today DOC ERR !', err);
@@ -73,42 +88,59 @@ setInterval(function () {
 }, 3600000);
 
 io.sockets.on('connection', function (socket) {
+    console.log(socket.request.connection.remoteAddress);
     totalVisited++;
     todayVisited++;
 
     socketAddress = socket.handshake.address.split(':');
     socketIP = socketAddress[socketAddress.length - 1];
     socketAddress = socketIP.split('.');
-    socketAddress = socketAddress[0] + '.' + socketAddress[1];
+    socketAddress = socketAddress[0] + '.' + 'x' + '.' + socketAddress[2] + '.' + socketAddress[3];
     onlinePeopleManage[socketIP] = socketAddress;
     onlinePeopleList = Object.keys(onlinePeopleManage).map(function (key) {
         return onlinePeopleManage[key];
     });
-    if (todayPeopleManage[socketIP] !== null) {
+    if (todayPeopleManage[socketIP] === undefined) {
+        console.log('when new member connect, add to today dictionary');
         todayPeopleManage[socketIP] = socketAddress;
     }
     todayPeopleList = Object.keys(todayPeopleManage).map(function (key) {
         return todayPeopleManage[key];
     });
 
-    var welcomeChat = [formatAMPM(new Date()) + socketAddress + ' : ' + 'Welcome !'];
+    console.log('online people list - ', onlinePeopleList);
+    console.log('today people list - ', todayPeopleList);
+
+    var welcomeChat = [{
+            time: formatAMPM(new Date()),
+            addr: socketAddress,
+            msg: 'Welcome !',
+            id: 0
+        }];
 
     socket.emit('toclient', {
         type: 'welcome',
-        msg: welcomeChat.concat(chatHistory),
+        msg: chatHistory.concat(welcomeChat),
         onlinePeopleList: onlinePeopleList,
         todayPeopleList: todayPeopleList,
         totalVisited: totalVisited,
         todayVisited: todayVisited
     });
     socket.on('fromclient', function (data) {
-        data.msg = formatAMPM(new Date()) + socketAddress + ' : ' + data.msg;
+        data.msg = {
+            time: formatAMPM(new Date()),
+            addr: socketAddress,
+            msg: data.msg,
+            id: (Object.keys(chatHistory).length+1)
+        };
         data.sender = 'other';
         chatHistory.push(data.msg);
         socket.broadcast.emit('toclient', data); // 자신을 제외하고 다른 클라이언트에게 보냄
         data.sender = 'me';
         socket.emit('toclient', data); // 해당 클라이언트에게만 보냄. 다른 클라이언트에 보낼려면?
         console.log('Message from client :' + data.msg);
+        console.log(chatHistory);
+        console.log(data.msg.id);
     })
 
     socket.on('disconnect', function () {
@@ -119,15 +151,3 @@ io.sockets.on('connection', function (socket) {
         delete onlinePeopleManage[socketIP];
     })
 });
-
-// io.sockets.on('connection', function (socket) {socket.emit('toclient', { type: 'welcome', msg: 'Welcome !', onlinePeopleList: onlinePeopleList });
-//     socket.on('fromclient', function (data) {
-//         socket.broadcast.emit('toclient', data); // 자신을 제외하고 다른 클라이언트에게 보냄
-//         socket.emit('toclient', data); // 해당 클라이언트에게만 보냄. 다른 클라이언트에 보낼려면?
-//         console.log('Message from client :' + data.msg);
-//     })
-
-//     socket.on('disconnect', function () {
-//         console.log('disconnection-');
-//     })
-// });
